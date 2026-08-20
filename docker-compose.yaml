@@ -1,0 +1,24 @@
+services:
+  fuxa-ai-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fuxa-ai-gateway:latest
+    container_name: fuxa-ai-gateway
+    restart: unless-stopped
+    environment:
+      FUXA_BASE_URL: ${FUXA_BASE_URL:-http://host.docker.internal:1881}
+      FUXA_API_KEY: ${FUXA_API_KEY:-}
+      FUXA_USERNAME: ${FUXA_USERNAME:-}
+      FUXA_PASSWORD: ${FUXA_PASSWORD:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    # The gateway is an MCP stdio server. It does not expose a network port;
+    # clients connect over stdio. The healthcheck verifies the process is alive.
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    stdin_open: true
+    tty: false
