@@ -1,5 +1,6 @@
 export { FuxaClient } from './client.js';
 export { FuxaAuth } from './auth.js';
+export { FetchTransport } from './transport.js';
 export { ProjectApi } from './project.js';
 export { TagApi } from './tags.js';
 export { AlarmApi } from './alarms.js';

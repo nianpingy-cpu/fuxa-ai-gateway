@@ -1,5 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { FuxaClient } from './adapters/fuxa/client.js';
+import { HealthService } from './services/health.service.js';
+import { ProjectService } from './services/project.service.js';
 
 export const SERVER_NAME = 'fuxa-ai-gateway';
 export const SERVER_VERSION = '0.1.0';
@@ -7,14 +10,17 @@ export const SERVER_VERSION = '0.1.0';
 /**
  * Create and configure the MCP server with its base tools.
  *
- * Issue #3 will add the full tool set. This issue establishes the server
- * lifecycle and the first two tools.
+ * Tools delegate to services, which delegate to the FUXA adapter. No tool
+ * calls HTTP directly.
  */
-export function createServer(): McpServer {
+export function createServer(client: FuxaClient): McpServer {
   const server = new McpServer({
     name: SERVER_NAME,
     version: SERVER_VERSION,
   });
+
+  const healthService = new HealthService(client);
+  const projectService = new ProjectService(client);
 
   server.registerTool(
     'fuxa_health_check',
@@ -25,11 +31,12 @@ export function createServer(): McpServer {
       inputSchema: z.object({}),
     },
     async () => {
+      const status = await healthService.check();
       return {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({ status: 'ok', gateway: 'ready' }),
+            text: JSON.stringify(status),
           },
         ],
       };
@@ -45,11 +52,12 @@ export function createServer(): McpServer {
       inputSchema: z.object({}),
     },
     async () => {
+      const overview = await projectService.overview();
       return {
         content: [
           {
             type: 'text',
-            text: JSON.stringify({ project: 'unknown', devices: 0, tags: 0 }),
+            text: JSON.stringify(overview),
           },
         ],
       };
