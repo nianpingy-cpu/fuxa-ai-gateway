@@ -1,15 +1,23 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { createServer } from '../src/server.js';
+import { FuxaClient } from '../src/adapters/fuxa/client.js';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
+
+function createMockClient(): FuxaClient {
+  return {
+    listProjects: vi.fn(async () => [{ id: 'p1', name: 'Demo Plant' }]),
+    listTags: vi.fn(async () => [{ id: 't1', name: 'temp' }]),
+  } as unknown as FuxaClient;
+}
 
 describe('MCP server', () => {
   let server: Server;
   let client: Client;
 
   beforeEach(async () => {
-    const mcpServer = createServer();
+    const mcpServer = createServer(createMockClient());
     server = mcpServer.server;
     const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
     await server.connect(serverSide);
@@ -23,7 +31,7 @@ describe('MCP server', () => {
   });
 
   it('creates a server instance with a name and version', () => {
-    const mcpServer = createServer();
+    const mcpServer = createServer(createMockClient());
     expect(mcpServer).toBeDefined();
     expect(mcpServer.server).toBeDefined();
   });
@@ -47,5 +55,14 @@ describe('MCP server', () => {
       .map((c) => c.text)
       .join('');
     expect(text).toContain('ok');
+  });
+
+  it('executes the project overview tool with real data', async () => {
+    const result = await client.callTool({ name: 'fuxa_project_overview', arguments: {} });
+    const text = result.content
+      .filter((c) => c.type === 'text')
+      .map((c) => c.text)
+      .join('');
+    expect(text).toContain('Demo Plant');
   });
 });
