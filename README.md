@@ -34,17 +34,17 @@ dangerous. FUXA-AI-Gateway sits between the model and FUXA and enforces:
 
 ## MCP Tools
 
-| Tool | Purpose |
-| --- | --- |
-| `fuxa_health_check` | Check FUXA connectivity and gateway health. |
-| `fuxa_project_overview` | Summarize the FUXA project structure. |
-| `fuxa_search_tags` | Search tags by natural language. |
-| `fuxa_search_equipment` | Search equipment/devices. |
-| `fuxa_get_current_state` | Read current values of tags. |
-| `fuxa_analyze_history` | Analyze historical data (mean, max, min, trend, anomaly). |
-| `fuxa_active_alarms` | List active alarms. |
-| `fuxa_alarm_analysis` | Diagnose an alarm. |
-| `fuxa_diagnose_equipment` | Diagnose equipment health. |
+| Tool                      | Purpose                                                   |
+| ------------------------- | --------------------------------------------------------- |
+| `fuxa_health_check`       | Check FUXA connectivity and gateway health.               |
+| `fuxa_project_overview`   | Summarize the FUXA project structure.                     |
+| `fuxa_search_tags`        | Search tags by natural language.                          |
+| `fuxa_search_equipment`   | Search equipment/devices.                                 |
+| `fuxa_get_current_state`  | Read current values of tags.                              |
+| `fuxa_analyze_history`    | Analyze historical data (mean, max, min, trend, anomaly). |
+| `fuxa_active_alarms`      | List active alarms.                                       |
+| `fuxa_alarm_analysis`     | Diagnose an alarm.                                        |
+| `fuxa_diagnose_equipment` | Diagnose equipment health.                                |
 
 ## Security Model
 
