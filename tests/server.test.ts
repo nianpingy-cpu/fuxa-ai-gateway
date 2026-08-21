@@ -8,7 +8,22 @@ import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 function createMockClient(): FuxaClient {
   return {
     listProjects: vi.fn(async () => [{ id: 'p1', name: 'Demo Plant' }]),
-    listTags: vi.fn(async () => [{ id: 't1', name: 'temp' }]),
+    listTags: vi.fn(async () => [
+      {
+        id: 't1',
+        name: 'temperature',
+        unit: 'C',
+        deviceId: 'd1',
+        description: 'Cooling pump temperature',
+      },
+      {
+        id: 't2',
+        name: 'pressure',
+        unit: 'bar',
+        deviceId: 'd1',
+        description: 'Cooling pump pressure',
+      },
+    ]),
   } as unknown as FuxaClient;
 }
 
@@ -64,5 +79,23 @@ describe('MCP server', () => {
       .map((c) => c.text)
       .join('');
     expect(text).toContain('Demo Plant');
+  });
+
+  it('registers the tag search tool', async () => {
+    const tools = await client.listTools();
+    const names = tools.tools.map((t) => t.name);
+    expect(names).toContain('fuxa_search_tags');
+  });
+
+  it('executes the tag search tool with a natural-language query', async () => {
+    const result = await client.callTool({
+      name: 'fuxa_search_tags',
+      arguments: { query: 'cooling pump temperature' },
+    });
+    const text = result.content
+      .filter((c) => c.type === 'text')
+      .map((c) => c.text)
+      .join('');
+    expect(text).toContain('temperature');
   });
 });
