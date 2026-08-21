@@ -8,3 +8,4 @@ export {
   type ComparisonResult,
   type PeriodStats,
 } from './comparison.service.js';
+export { AlarmService, type AlarmDiagnosis } from './alarm.service.js';
