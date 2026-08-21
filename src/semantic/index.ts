@@ -7,3 +7,4 @@ export {
   validateTag,
 } from './model.js';
 export { mapDevice, mapTag } from './mapper.js';
+export { DeviceGraph, type GraphNode, type NodeKind } from './graph.js';
