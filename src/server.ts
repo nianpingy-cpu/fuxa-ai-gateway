@@ -5,6 +5,7 @@ import { HealthService } from './services/health.service.js';
 import { ProjectService } from './services/project.service.js';
 import { TagSearchService } from './services/tag-search.service.js';
 import { HistoryService } from './services/history.service.js';
+import { ComparisonService } from './services/comparison.service.js';
 
 export const SERVER_NAME = 'fuxa-ai-gateway';
 export const SERVER_VERSION = '0.1.0';
@@ -25,6 +26,7 @@ export function createServer(client: FuxaClient): McpServer {
   const projectService = new ProjectService(client);
   const tagSearchService = new TagSearchService(client);
   const historyService = new HistoryService(client);
+  const comparisonService = new ComparisonService(client);
 
   server.registerTool(
     'fuxa_health_check',
@@ -110,6 +112,33 @@ export function createServer(client: FuxaClient): McpServer {
           {
             type: 'text',
             text: JSON.stringify(analysis),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    'fuxa_compare_periods',
+    {
+      title: 'FUXA Period Comparison',
+      description:
+        'Compare two time periods (e.g. today vs yesterday) for a tag. Read-only. Returns statistics for each period and the deltas between them.',
+      inputSchema: {
+        tagId: z.string().describe('Tag id to compare'),
+        from1: z.string().describe('Start of first period (ISO 8601)'),
+        to1: z.string().describe('End of first period (ISO 8601)'),
+        from2: z.string().describe('Start of second period (ISO 8601)'),
+        to2: z.string().describe('End of second period (ISO 8601)'),
+      },
+    },
+    async ({ tagId, from1, to1, from2, to2 }) => {
+      const result = await comparisonService.compare(tagId, from1, to1, from2, to2);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result),
           },
         ],
       };
