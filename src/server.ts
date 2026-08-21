@@ -4,6 +4,7 @@ import { FuxaClient } from './adapters/fuxa/client.js';
 import { HealthService } from './services/health.service.js';
 import { ProjectService } from './services/project.service.js';
 import { TagSearchService } from './services/tag-search.service.js';
+import { HistoryService } from './services/history.service.js';
 
 export const SERVER_NAME = 'fuxa-ai-gateway';
 export const SERVER_VERSION = '0.1.0';
@@ -23,6 +24,7 @@ export function createServer(client: FuxaClient): McpServer {
   const healthService = new HealthService(client);
   const projectService = new ProjectService(client);
   const tagSearchService = new TagSearchService(client);
+  const historyService = new HistoryService(client);
 
   server.registerTool(
     'fuxa_health_check',
@@ -83,6 +85,31 @@ export function createServer(client: FuxaClient): McpServer {
           {
             type: 'text',
             text: JSON.stringify(results),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    'fuxa_analyze_history',
+    {
+      title: 'FUXA History Analysis',
+      description:
+        'Analyze historical data for a tag. Read-only. Returns a compact summary with mean, max, min, trend, and anomaly. Aggregates data rather than returning raw points.',
+      inputSchema: {
+        tagId: z.string().describe('Tag id to analyze'),
+        from: z.string().describe('Start time (ISO 8601)'),
+        to: z.string().describe('End time (ISO 8601)'),
+      },
+    },
+    async ({ tagId, from, to }) => {
+      const analysis = await historyService.analyze(tagId, from, to);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(analysis),
           },
         ],
       };

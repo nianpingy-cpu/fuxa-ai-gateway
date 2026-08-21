@@ -24,6 +24,11 @@ function createMockClient(): FuxaClient {
         description: 'Cooling pump pressure',
       },
     ]),
+    getHistory: vi.fn(async () => [
+      { timestamp: '2026-01-01T00:00:00Z', value: 10 },
+      { timestamp: '2026-01-01T00:01:00Z', value: 20 },
+      { timestamp: '2026-01-01T00:02:00Z', value: 30 },
+    ]),
   } as unknown as FuxaClient;
 }
 
@@ -97,5 +102,23 @@ describe('MCP server', () => {
       .map((c) => c.text)
       .join('');
     expect(text).toContain('temperature');
+  });
+
+  it('registers the history analysis tool', async () => {
+    const tools = await client.listTools();
+    const names = tools.tools.map((t) => t.name);
+    expect(names).toContain('fuxa_analyze_history');
+  });
+
+  it('executes the history analysis tool', async () => {
+    const result = await client.callTool({
+      name: 'fuxa_analyze_history',
+      arguments: { tagId: 't1', from: '2026-01-01T00:00:00Z', to: '2026-01-01T00:03:00Z' },
+    });
+    const text = result.content
+      .filter((c) => c.type === 'text')
+      .map((c) => c.text)
+      .join('');
+    expect(text).toContain('"mean":20');
   });
 });

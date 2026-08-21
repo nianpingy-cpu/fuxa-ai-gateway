@@ -1,4 +1,5 @@
 import {
+  DaqPoint,
   FuxaAlarm,
   FuxaConfig,
   FuxaProject,
@@ -72,7 +73,7 @@ export class FuxaClient {
     return this.alarmApi.getAlarm(id);
   }
 
-  getHistory(tagId: string, from: string, to: string): Promise<unknown[]> {
+  getHistory(tagId: string, from: string, to: string): Promise<DaqPoint[]> {
     return this.daqApi.getHistory(tagId, from, to);
   }
 }
