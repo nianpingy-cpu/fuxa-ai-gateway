@@ -15,7 +15,7 @@ services:
     # The gateway is an MCP stdio server. It does not expose a network port;
     # clients connect over stdio. The healthcheck verifies the process is alive.
     healthcheck:
-      test: ["CMD", "node", "-e", "process.exit(0)"]
+      test: ['CMD', 'node', '-e', 'process.exit(0)']
       interval: 30s
       timeout: 5s
       retries: 3
