@@ -3,3 +3,8 @@ export { ProjectService, type ProjectOverview, type ProjectSummary } from './pro
 export { TagSearchService, type TagSearchResult } from './tag-search.service.js';
 export { DeviceGraphService } from './device-graph.service.js';
 export { HistoryService } from './history.service.js';
+export {
+  ComparisonService,
+  type ComparisonResult,
+  type PeriodStats,
+} from './comparison.service.js';
