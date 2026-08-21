@@ -6,6 +6,7 @@ import { ProjectService } from './services/project.service.js';
 import { TagSearchService } from './services/tag-search.service.js';
 import { HistoryService } from './services/history.service.js';
 import { ComparisonService } from './services/comparison.service.js';
+import { AlarmService } from './services/alarm.service.js';
 
 export const SERVER_NAME = 'fuxa-ai-gateway';
 export const SERVER_VERSION = '0.1.0';
@@ -27,6 +28,7 @@ export function createServer(client: FuxaClient): McpServer {
   const tagSearchService = new TagSearchService(client);
   const historyService = new HistoryService(client);
   const comparisonService = new ComparisonService(client);
+  const alarmService = new AlarmService(client);
 
   server.registerTool(
     'fuxa_health_check',
@@ -134,6 +136,29 @@ export function createServer(client: FuxaClient): McpServer {
     },
     async ({ tagId, from1, to1, from2, to2 }) => {
       const result = await comparisonService.compare(tagId, from1, to1, from2, to2);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    'fuxa_alarm_analysis',
+    {
+      title: 'FUXA Alarm Analysis',
+      description:
+        'Analyze an alarm. Read-only. Walks Alarm -> Device -> Related Tags -> History -> Diagnosis and returns a diagnosis.',
+      inputSchema: {
+        alarmId: z.string().describe('Alarm id to analyze'),
+      },
+    },
+    async ({ alarmId }) => {
+      const result = await alarmService.analyze(alarmId);
       return {
         content: [
           {
