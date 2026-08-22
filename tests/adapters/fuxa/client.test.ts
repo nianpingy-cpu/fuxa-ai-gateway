@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { FuxaClient } from '../../../src/adapters/fuxa/client.js';
-import { FuxaError, HttpTransport, HttpRequestOptions } from '../../../src/adapters/fuxa/types.js';
+import {
+  FuxaError,
+  HttpTransport,
+  HttpRequestOptions,
+  ValueWriter,
+} from '../../../src/adapters/fuxa/types.js';
 
 function createMockTransport() {
   const calls: HttpRequestOptions[] = [];
@@ -43,5 +48,30 @@ describe('FuxaClient', () => {
 
     await expect(client.getProject()).rejects.toBeInstanceOf(FuxaError);
     await expect(client.getProject()).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+  });
+
+  it('writes a tag value bound to a device via the value writer', async () => {
+    const { transport } = createMockTransport();
+    const valueWriter: ValueWriter = {
+      writeTagValue: vi.fn(async () => undefined),
+    };
+    const client = new FuxaClient(
+      { baseUrl: 'http://fuxa:1881' },
+      transport,
+      valueWriter,
+    );
+
+    await client.writeTagValue('dev-1', 'temperature', 42.5);
+
+    expect(valueWriter.writeTagValue).toHaveBeenCalledWith('dev-1', 'temperature', 42.5);
+  });
+
+  it('throws when no value writer is configured', async () => {
+    const { transport } = createMockTransport();
+    const client = new FuxaClient({ baseUrl: 'http://fuxa:1881' }, transport);
+
+    await expect(client.writeTagValue('dev-1', 'temperature', 1)).rejects.toThrow(
+      'no value writer configured',
+    );
   });
 });

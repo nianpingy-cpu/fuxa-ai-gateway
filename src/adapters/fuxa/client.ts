@@ -7,10 +7,12 @@ import {
   FuxaTag,
   HttpRequestOptions,
   HttpTransport,
+  NormalizedDevice,
+  ValueWriter,
 } from './types.js';
 import { FuxaAuth } from './auth.js';
 import { ProjectApi } from './project.js';
-import { TagApi } from './tags.js';
+import { TagApi, extractDevices } from './tags.js';
 import { AlarmApi } from './alarms.js';
 import { DaqApi } from './daq.js';
 
@@ -28,8 +30,9 @@ export class FuxaClient {
   private readonly tagApi: TagApi;
   private readonly alarmApi: AlarmApi;
   private readonly daqApi: DaqApi;
+  private readonly valueWriter?: ValueWriter;
 
-  constructor(config: FuxaConfig, transport: HttpTransport) {
+  constructor(config: FuxaConfig, transport: HttpTransport, valueWriter?: ValueWriter) {
     const baseUrl = config.baseUrl.replace(/\/$/, '');
     this.auth = new FuxaAuth(transport, baseUrl, {
       apiKey: config.apiKey,
@@ -48,6 +51,7 @@ export class FuxaClient {
     this.tagApi = new TagApi(authedTransport, baseUrl);
     this.alarmApi = new AlarmApi(authedTransport, baseUrl);
     this.daqApi = new DaqApi(authedTransport, baseUrl);
+    this.valueWriter = valueWriter;
   }
 
   getProject(): Promise<FuxaProject> {
@@ -64,6 +68,14 @@ export class FuxaClient {
 
   getTag(id: string): Promise<FuxaTag | undefined> {
     return this.tagApi.getTag(id);
+  }
+
+  /**
+   * Return the normalized device tree (devices and their bound tags).
+   */
+  async listDevices(): Promise<NormalizedDevice[]> {
+    const project = await this.getProject();
+    return extractDevices(project.raw);
   }
 
   listActiveAlarms(): Promise<FuxaAlarm[]> {
@@ -83,5 +95,16 @@ export class FuxaClient {
    */
   async addDevice(device: FuxaDevice): Promise<void> {
     await this.projectApi.setProjectData('set-device', device);
+  }
+
+  /**
+   * Write a runtime tag value bound to a device (write operation). Requires a
+   * configured ValueWriter (socket.io connection to FUXA).
+   */
+  async writeTagValue(deviceId: string, tagId: string, value: unknown): Promise<void> {
+    if (!this.valueWriter) {
+      throw new Error('no value writer configured');
+    }
+    await this.valueWriter.writeTagValue(deviceId, tagId, value);
   }
 }

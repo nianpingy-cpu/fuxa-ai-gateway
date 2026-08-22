@@ -5,6 +5,7 @@ export { ProjectApi } from './project.js';
 export { TagApi } from './tags.js';
 export { AlarmApi } from './alarms.js';
 export { DaqApi } from './daq.js';
+export { SocketIoValueWriter } from './value-writer.js';
 export {
   FuxaError,
   type AuthResult,
@@ -14,7 +15,10 @@ export {
   type FuxaDevice,
   type FuxaProject,
   type FuxaTag,
+  type NormalizedDevice,
+  type NormalizedTag,
   type RawFuxaProject,
+  type ValueWriter,
   type HttpRequestOptions,
   type HttpTransport,
 } from './types.js';

@@ -1,5 +1,10 @@
 export { HealthService, type HealthStatus } from './health.service.js';
-export { ProjectService, type ProjectOverview, type ProjectSummary } from './project.service.js';
+export {
+  ProjectService,
+  type ProjectOverview,
+  type ProjectSummary,
+  type DeviceSummary,
+} from './project.service.js';
 export { TagSearchService, type TagSearchResult } from './tag-search.service.js';
 export { DeviceGraphService } from './device-graph.service.js';
 export { HistoryService } from './history.service.js';
@@ -10,3 +15,8 @@ export {
 } from './comparison.service.js';
 export { AlarmService, type AlarmDiagnosis } from './alarm.service.js';
 export { DiagnosisService, type EquipmentDiagnosis } from './diagnosis.service.js';
+export { DeviceWriteService, type DeviceWriteResult } from './device-write.service.js';
+export {
+  DeviceValueWriteService,
+  type DeviceValueWriteResult,
+} from './device-value-write.service.js';

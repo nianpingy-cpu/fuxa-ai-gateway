@@ -21,6 +21,10 @@ async function main() {
   r = await client.callTool({ name: 'fuxa_project_overview', arguments: {} });
   console.log(text(r));
 
+  console.log('=== fuxa_list_devices ===');
+  r = await client.callTool({ name: 'fuxa_list_devices', arguments: {} });
+  console.log(text(r));
+
   console.log('=== fuxa_search_tags ===');
   r = await client.callTool({ name: 'fuxa_search_tags', arguments: { query: 'temp' } });
   console.log(text(r));

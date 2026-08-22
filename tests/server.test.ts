@@ -8,6 +8,19 @@ import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 function createMockClient(): FuxaClient {
   return {
     listProjects: vi.fn(async () => [{ id: 'p1', name: 'Demo Plant' }]),
+    listDevices: vi.fn(async () => [
+      {
+        id: 'd1',
+        name: 'Cooling Pump',
+        type: 'internal',
+        enabled: true,
+        tagCount: 2,
+        tags: [
+          { id: 't1', name: 'temperature', type: 'number', address: 'temp', unit: 'C' },
+          { id: 't2', name: 'pressure', type: 'number', address: 'press', unit: 'bar' },
+        ],
+      },
+    ]),
     listTags: vi.fn(async () => [
       {
         id: 't1',
@@ -120,5 +133,44 @@ describe('MCP server', () => {
       .map((c) => c.text)
       .join('');
     expect(text).toContain('"mean":20');
+  });
+
+  it('registers the list devices tool', async () => {
+    const tools = await client.listTools();
+    const names = tools.tools.map((t) => t.name);
+    expect(names).toContain('fuxa_list_devices');
+  });
+
+  it('executes the list devices tool', async () => {
+    const result = await client.callTool({ name: 'fuxa_list_devices', arguments: {} });
+    const text = result.content
+      .filter((c) => c.type === 'text')
+      .map((c) => c.text)
+      .join('');
+    expect(text).toContain('Cooling Pump');
+    expect(text).toContain('"tagCount":2');
+  });
+
+  it('registers the write tag value tool', async () => {
+    const tools = await client.listTools();
+    const names = tools.tools.map((t) => t.name);
+    expect(names).toContain('fuxa_write_tag_value');
+  });
+
+  it('blocks the write tag value tool by default', async () => {
+    const result = await client.callTool({
+      name: 'fuxa_write_tag_value',
+      arguments: {
+        deviceId: 'd1',
+        tagId: 't1',
+        value: 42.5,
+        approver: 'lead',
+      },
+    });
+    const text = result.content
+      .filter((c) => c.type === 'text')
+      .map((c) => c.text)
+      .join('');
+    expect(text).toContain('"allowed":false');
   });
 });

@@ -31,6 +31,29 @@ export interface FuxaTag {
 }
 
 /**
+ * Normalized tag with the raw device-bound tag details surfaced to tools.
+ */
+export interface NormalizedTag {
+  id: string;
+  name: string;
+  type?: string;
+  address?: string;
+  unit?: string;
+}
+
+/**
+ * Normalized device (a FUXA device with its bound tags) surfaced to tools.
+ */
+export interface NormalizedDevice {
+  id: string;
+  name: string;
+  type?: string;
+  enabled?: boolean;
+  tagCount: number;
+  tags: NormalizedTag[];
+}
+
+/**
  * Raw FUXA device (as stored in the FUXA project).
  */
 export interface FuxaDevice {
@@ -111,4 +134,13 @@ export interface HttpRequestOptions {
   url: string;
   headers?: Record<string, string>;
   body?: unknown;
+}
+
+/**
+ * Writes a runtime tag value bound to a device. FUXA writes live tag values
+ * over a socket.io connection (not over the HTTP project API), so this is
+ * abstracted behind a small interface to keep the adapter testable.
+ */
+export interface ValueWriter {
+  writeTagValue(deviceId: string, tagId: string, value: unknown): Promise<void>;
 }

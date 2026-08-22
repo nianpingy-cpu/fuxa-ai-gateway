@@ -3,11 +3,13 @@ import { createServer } from './server.js';
 import { loadConfig } from './config.js';
 import { FuxaClient } from './adapters/fuxa/client.js';
 import { FetchTransport } from './adapters/fuxa/transport.js';
+import { SocketIoValueWriter } from './adapters/fuxa/value-writer.js';
 
 async function main(): Promise<void> {
   const config = loadConfig();
   const transport = new FetchTransport();
-  const client = new FuxaClient(config, transport);
+  const valueWriter = new SocketIoValueWriter(config.baseUrl);
+  const client = new FuxaClient(config, transport, valueWriter);
   const writeEnabled = (process.env['FUXA_WRITE_ENABLED'] ?? 'false').toLowerCase() === 'true';
   const server = createServer(client, { writeEnabled });
   const stdio = new StdioServerTransport();

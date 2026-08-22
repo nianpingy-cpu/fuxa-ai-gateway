@@ -149,14 +149,16 @@ node dist/index.js
 | 工具名 | 读写 | 参数 | 作用 |
 |--------|------|------|------|
 | `fuxa_health_check` | 读 | 无 | 检查 FUXA 连接与网关健康状态 |
-| `fuxa_project_overview` | 读 | 无 | 返回 FUXA 项目结构总览（设备/标签数） |
+| `fuxa_project_overview` | 读 | 无 | 返回 FUXA 项目总览（设备数、标签数、设备列表摘要） |
+| `fuxa_list_devices` | 读 | 无 | 返回完整设备树（设备 id/名称/类型/使能 + 每个设备绑定的标签 id/名称/类型/地址/单位） |
 | `fuxa_search_tags` | 读 | `query` | 自然语言搜索标签 |
 | `fuxa_analyze_history` | 读 | `tagId`,`from`,`to` | 分析标签历史数据（均值/最值/趋势/异常） |
 | `fuxa_compare_periods` | 读 | `tagId`,`from1`,`to1`,`from2`,`to2` | 对比两个时间段 |
 | `fuxa_alarm_analysis` | 读 | `alarmId` | 告警链路分析（告警→设备→标签→历史→诊断） |
 | `fuxa_diagnose_equipment` | 读 | `deviceId` | 设备健康诊断（当前状态+历史+告警） |
 | `fuxa_metrics` | 读 | 无 | 网关 Prometheus 监控指标 |
-| `fuxa_add_device` | **写** | `device`,`approver` | 向 FUXA 项目添加设备（需审批人） |
+| `fuxa_add_device` | **写** | `device`,`approver` | 向 FUXA 项目添加设备（结构写入，需审批人） |
+| `fuxa_write_tag_value` | **写** | `deviceId`,`tagId`,`value`,`approver` | 向设备的某个标签写入运行时值（如开关泵/设设定值，需审批人） |
 
 ---
 
@@ -246,13 +248,45 @@ node dist/index.js
 - FUXA 在收到 `projectData` 写入后 **会重启服务**，导致本次响应连接被断开。网关的 `DeviceWriteService` 已做容错：若写入后出现连接错误，会主动**再次查询确认设备是否真的添加成功**。
 - 因此即使返回报"连接失败"，设备**通常已成功写入**，请在 FUXA Editor 中确认。
 
-![FUXA Editor 编辑器](./screenshots/fuxa-editor.png)
+---
 
-![FUXA Editor 设备视图](./screenshots/fuxa-editor-devices.png)
+## 9. 调用写工具（fuxa_write_tag_value — 向设备写入数据）
+
+`fuxa_add_device` 只做**项目结构**写入（新增设备）。若要**向某个设备写入运行时数据**（例如开/关一台泵、设定一个设定值），使用 `fuxa_write_tag_value`。
+
+FUXA 的实时标签值不是通过 HTTP `projectData` 写入的，而是通过 **socket.io** 连接写入：网关的 `SocketIoValueWriter` 会连接 FUXA 并发送与前端完全一致的 `device-values` 消息：
+`{ cmd: 'set', var: { source: <deviceId>, id: <tagId>, value } }`。
+
+### 9.1 示例调用
+
+```json
+{
+  "deviceId": "dev-hex-1",
+  "tagId": "supplyT",
+  "value": 88.5,
+  "approver": "engineering-lead"
+}
+```
+
+### 9.2 返回结果
+
+```json
+{
+  "allowed": true,
+  "reason": "write approved for fuxa_write_tag_value",
+  "approvalId": "appr-1"
+}
+```
+
+### 9.3 注意事项
+
+- 与添加设备不同，**值写入不会触发 FUXA 重启**。
+- 值是否最终生效取决于目标设备的通信插件（PLC/Modbus/MQTT 等底层连接）；对未真正运行通信插件的设备，写消息仍会被 FUXA 接收，但不一定有可回读的生效值。
+- 该工具同样受 `FUXA_WRITE_ENABLED` 与 `approver` 双重门控，并写入审计日志。
 
 ---
 
-## 9. 验证写入是否成功
+## 10. 验证写入是否成功
 
 ### 9.1 通过 MCP 读工具验证
 
@@ -273,11 +307,12 @@ curl -X GET "http://localhost:1881/api/project"
 
 ---
 
-## 10. 测试与质量
+## 11. 测试与质量
 
 ```bash
-npm run test          # 单元测试（当前 88 个全部通过）
-npm run test:coverage # 覆盖率（约 87.94%）
+npm run test          # 单元测试（当前 99 个全部通过）
+npm run test:coverage # 覆盖率
+```
 npm run build         # 编译
 npm run lint          # 静态检查
 ```
@@ -290,7 +325,7 @@ npm run lint          # 静态检查
 
 ---
 
-## 11. 常见问题（FAQ）
+## 12. 常见问题（FAQ）
 
 | 现象 | 原因 | 解决 |
 |------|------|------|
@@ -302,7 +337,7 @@ npm run lint          # 静态检查
 
 ---
 
-## 12. 总结
+## 13. 总结
 
 1. 启动 FUXA：`node "C:\Users\27796\FUXA\server\main.js"`（端口 1881）
 2. 配置 `.env`，按需开启 `FUXA_WRITE_ENABLED`

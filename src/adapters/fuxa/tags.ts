@@ -1,4 +1,4 @@
-import { FuxaTag, HttpTransport, RawFuxaProject } from './types.js';
+import { FuxaTag, HttpTransport, NormalizedDevice, NormalizedTag, RawFuxaProject } from './types.js';
 
 /**
  * FUXA tag endpoints. FUXA does not expose a standalone tag API; tags are
@@ -49,4 +49,40 @@ export function extractTags(raw: RawFuxaProject): FuxaTag[] {
     }
   }
   return tags;
+}
+
+/**
+ * Extract the normalized device tree (devices and their bound tags) from a
+ * raw FUXA project. Unlike extractTags, this preserves the full device
+ * structure so tools can surface all device information.
+ */
+export function extractDevices(raw: RawFuxaProject): NormalizedDevice[] {
+  const devices = raw.devices ?? {};
+  return Object.entries(devices).map(([id, device]) => {
+    const tags: NormalizedTag[] = Object.entries(device.tags ?? {}).map(
+      ([tagId, tag]) => {
+        const t = (tag ?? {}) as {
+          name?: string;
+          type?: string;
+          address?: string;
+          unit?: string;
+        };
+        return {
+          id: tagId,
+          name: t.name ?? tagId,
+          type: t.type,
+          address: t.address,
+          unit: t.unit,
+        };
+      },
+    );
+    return {
+      id,
+      name: device.name ?? id,
+      type: device.type,
+      enabled: device.enabled,
+      tagCount: tags.length,
+      tags,
+    };
+  });
 }
