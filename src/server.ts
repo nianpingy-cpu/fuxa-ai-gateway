@@ -8,6 +8,7 @@ import { HistoryService } from './services/history.service.js';
 import { ComparisonService } from './services/comparison.service.js';
 import { AlarmService } from './services/alarm.service.js';
 import { DiagnosisService } from './services/diagnosis.service.js';
+import { registerPrompts } from './prompts/index.js';
 
 export const SERVER_NAME = 'fuxa-ai-gateway';
 export const SERVER_VERSION = '0.1.0';
@@ -23,6 +24,8 @@ export function createServer(client: FuxaClient): McpServer {
     name: SERVER_NAME,
     version: SERVER_VERSION,
   });
+
+  registerPrompts(server);
 
   const healthService = new HealthService(client);
   const projectService = new ProjectService(client);
