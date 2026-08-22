@@ -9,6 +9,7 @@ import { ComparisonService } from './services/comparison.service.js';
 import { AlarmService } from './services/alarm.service.js';
 import { DiagnosisService } from './services/diagnosis.service.js';
 import { registerPrompts } from './prompts/index.js';
+import { MetricsService } from './monitoring/metrics.js';
 
 export const SERVER_NAME = 'fuxa-ai-gateway';
 export const SERVER_VERSION = '0.1.0';
@@ -26,6 +27,8 @@ export function createServer(client: FuxaClient): McpServer {
   });
 
   registerPrompts(server);
+
+  const metrics = new MetricsService();
 
   const healthService = new HealthService(client);
   const projectService = new ProjectService(client);
@@ -192,6 +195,26 @@ export function createServer(client: FuxaClient): McpServer {
           {
             type: 'text',
             text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    'fuxa_metrics',
+    {
+      title: 'FUXA Gateway Metrics',
+      description:
+        'Return gateway monitoring metrics in Prometheus text format. Read-only. Includes request count, latency, error count, and tool usage.',
+      inputSchema: z.object({}),
+    },
+    async () => {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: metrics.prometheusText(),
           },
         ],
       };
