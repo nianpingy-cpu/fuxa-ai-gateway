@@ -9,3 +9,4 @@ export {
   type PeriodStats,
 } from './comparison.service.js';
 export { AlarmService, type AlarmDiagnosis } from './alarm.service.js';
+export { DiagnosisService, type EquipmentDiagnosis } from './diagnosis.service.js';
