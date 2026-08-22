@@ -1,7 +1,9 @@
-import { FuxaTag, HttpTransport } from './types.js';
+import { FuxaTag, HttpTransport, RawFuxaProject } from './types.js';
 
 /**
- * FUXA tag endpoints.
+ * FUXA tag endpoints. FUXA does not expose a standalone tag API; tags are
+ * nested inside project devices. This module reads the project and extracts
+ * tags.
  */
 export class TagApi {
   private readonly transport: HttpTransport;
@@ -12,19 +14,39 @@ export class TagApi {
     this.baseUrl = baseUrl;
   }
 
-  async listTags(): Promise<FuxaTag[]> {
-    const response = await this.transport.request<{ data: FuxaTag[] }>({
+  async getProject(): Promise<RawFuxaProject> {
+    return this.transport.request<RawFuxaProject>({
       method: 'GET',
-      url: `${this.baseUrl}/api/tags`,
+      url: `${this.baseUrl}/api/project`,
     });
-    return response.data;
   }
 
-  async getTag(id: string): Promise<FuxaTag> {
-    const response = await this.transport.request<{ data: FuxaTag }>({
-      method: 'GET',
-      url: `${this.baseUrl}/api/tags/${id}`,
-    });
-    return response.data;
+  async listTags(): Promise<FuxaTag[]> {
+    const raw = await this.getProject();
+    return extractTags(raw);
   }
+
+  async getTag(id: string): Promise<FuxaTag | undefined> {
+    const tags = await this.listTags();
+    return tags.find((t) => t.id === id);
+  }
+}
+
+export function extractTags(raw: RawFuxaProject): FuxaTag[] {
+  const tags: FuxaTag[] = [];
+  const devices = raw.devices ?? {};
+  for (const [deviceId, device] of Object.entries(devices)) {
+    const deviceTags = device.tags ?? {};
+    for (const [tagId, tag] of Object.entries(deviceTags)) {
+      const t = (tag ?? {}) as { name?: string; unit?: string; description?: string };
+      tags.push({
+        id: tagId,
+        name: t.name ?? tagId,
+        unit: t.unit,
+        deviceId,
+        description: t.description,
+      });
+    }
+  }
+  return tags;
 }

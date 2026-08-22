@@ -14,23 +14,23 @@ function createMockTransport() {
 }
 
 describe('FuxaClient alarm endpoints', () => {
-  it('lists active alarms', async () => {
+  it('lists active alarms from GET /api/alarms', async () => {
     const { transport, calls } = createMockTransport();
     const client = new FuxaClient({ baseUrl: 'http://fuxa:1881' }, transport);
 
     await client.listActiveAlarms();
 
     expect(calls[0]?.method).toBe('GET');
-    expect(calls[0]?.url).toBe('http://fuxa:1881/api/alarms/active');
+    expect(calls[0]?.url).toBe('http://fuxa:1881/api/alarms');
   });
 
   it('fetches an alarm by id', async () => {
-    const { transport, calls } = createMockTransport();
+    const transport: HttpTransport = {
+      request: vi.fn(async () => [{ id: 'a1', name: 'High Temp', active: true }]),
+    };
     const client = new FuxaClient({ baseUrl: 'http://fuxa:1881' }, transport);
 
-    await client.getAlarm('a1');
-
-    expect(calls[0]?.method).toBe('GET');
-    expect(calls[0]?.url).toBe('http://fuxa:1881/api/alarms/a1');
+    const alarm = await client.getAlarm('a1');
+    expect(alarm?.name).toBe('High Temp');
   });
 });

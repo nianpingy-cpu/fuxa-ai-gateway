@@ -1,36 +1,43 @@
 import { describe, it, expect, vi } from 'vitest';
 import { FuxaClient } from '../../../src/adapters/fuxa/client.js';
-import { HttpTransport, HttpRequestOptions } from '../../../src/adapters/fuxa/types.js';
-
-function createMockTransport() {
-  const calls: HttpRequestOptions[] = [];
-  const transport: HttpTransport = {
-    request: vi.fn(async <T>(options: HttpRequestOptions): Promise<T> => {
-      calls.push(options);
-      return { data: {} } as T;
-    }),
-  };
-  return { transport, calls };
-}
+import { HttpTransport } from '../../../src/adapters/fuxa/types.js';
 
 describe('FuxaClient tag endpoints', () => {
-  it('lists tags', async () => {
-    const { transport, calls } = createMockTransport();
+  it('extracts tags from the project devices', async () => {
+    const transport: HttpTransport = {
+      request: vi.fn(async () => ({
+        devices: {
+          d1: {
+            id: 'd1',
+            name: 'Cooling Pump',
+            tags: {
+              t1: { id: 't1', name: 'temperature', unit: 'C', description: 'temp' },
+              t2: { id: 't2', name: 'pressure', unit: 'bar' },
+            },
+          },
+        },
+      })),
+    };
     const client = new FuxaClient({ baseUrl: 'http://fuxa:1881' }, transport);
 
-    await client.listTags();
+    const tags = await client.listTags();
 
-    expect(calls[0]?.method).toBe('GET');
-    expect(calls[0]?.url).toBe('http://fuxa:1881/api/tags');
+    expect(tags).toHaveLength(2);
+    expect(tags[0]?.name).toBe('temperature');
+    expect(tags[0]?.deviceId).toBe('d1');
   });
 
   it('fetches a tag by id', async () => {
-    const { transport, calls } = createMockTransport();
+    const transport: HttpTransport = {
+      request: vi.fn(async () => ({
+        devices: {
+          d1: { id: 'd1', name: 'D', tags: { t1: { id: 't1', name: 'temperature' } } },
+        },
+      })),
+    };
     const client = new FuxaClient({ baseUrl: 'http://fuxa:1881' }, transport);
 
-    await client.getTag('t1');
-
-    expect(calls[0]?.method).toBe('GET');
-    expect(calls[0]?.url).toBe('http://fuxa:1881/api/tags/t1');
+    const tag = await client.getTag('t1');
+    expect(tag?.name).toBe('temperature');
   });
 });

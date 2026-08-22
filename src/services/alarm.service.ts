@@ -33,6 +33,9 @@ export class AlarmService {
 
   async analyze(alarmId: string): Promise<AlarmDiagnosis> {
     const alarm = await this.client.getAlarm(alarmId);
+    if (!alarm) {
+      throw new Error(`Alarm not found: ${alarmId}`);
+    }
     const relatedTags: string[] = [];
     if (alarm.tagId) {
       relatedTags.push(alarm.tagId);

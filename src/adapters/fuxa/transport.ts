@@ -14,17 +14,27 @@ export class FetchTransport implements HttpTransport {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
+      const headers: Record<string, string> = { ...options.headers };
+      if (options.body !== undefined && headers['Content-Type'] === undefined) {
+        headers['Content-Type'] = 'application/json';
+      }
       const response = await fetch(options.url, {
         method: options.method,
-        headers: options.headers,
+        headers,
         body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
         signal: controller.signal,
       });
 
       if (!response.ok) {
+        let detail = '';
+        try {
+          detail = await response.text();
+        } catch {
+          // ignore body read failure
+        }
         throw new FuxaError(
           'HTTP_ERROR',
-          `FUXA request failed with status ${response.status}`,
+          `FUXA request failed with status ${response.status}${detail ? `: ${detail}` : ''}`,
           response.status,
         );
       }

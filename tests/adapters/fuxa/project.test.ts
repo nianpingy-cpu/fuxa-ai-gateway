@@ -14,23 +14,37 @@ function createMockTransport() {
 }
 
 describe('FuxaClient project endpoints', () => {
-  it('fetches a project by id', async () => {
+  it('fetches the project from GET /api/project', async () => {
     const { transport, calls } = createMockTransport();
     const client = new FuxaClient({ baseUrl: 'http://fuxa:1881' }, transport);
 
-    await client.getProject('p1');
+    await client.getProject();
 
     expect(calls[0]?.method).toBe('GET');
-    expect(calls[0]?.url).toBe('http://fuxa:1881/api/project/p1');
+    expect(calls[0]?.url).toBe('http://fuxa:1881/api/project');
   });
 
-  it('lists projects', async () => {
+  it('lists projects as a single project', async () => {
     const { transport, calls } = createMockTransport();
     const client = new FuxaClient({ baseUrl: 'http://fuxa:1881' }, transport);
 
     await client.listProjects();
 
     expect(calls[0]?.method).toBe('GET');
-    expect(calls[0]?.url).toBe('http://fuxa:1881/api/projects');
+    expect(calls[0]?.url).toBe('http://fuxa:1881/api/project');
+  });
+
+  it('adds a device via POST /api/projectData with set-device cmd', async () => {
+    const { transport, calls } = createMockTransport();
+    const client = new FuxaClient({ baseUrl: 'http://fuxa:1881' }, transport);
+
+    await client.addDevice({ id: 'd1', name: 'Pump', type: 'Simulation' });
+
+    expect(calls[0]?.method).toBe('POST');
+    expect(calls[0]?.url).toBe('http://fuxa:1881/api/projectData');
+    expect(calls[0]?.body).toEqual({
+      cmd: 'set-device',
+      data: { id: 'd1', name: 'Pump', type: 'Simulation' },
+    });
   });
 });

@@ -8,19 +8,26 @@ import { HistoryService } from './services/history.service.js';
 import { ComparisonService } from './services/comparison.service.js';
 import { AlarmService } from './services/alarm.service.js';
 import { DiagnosisService } from './services/diagnosis.service.js';
+import { DeviceWriteService } from './services/device-write.service.js';
 import { registerPrompts } from './prompts/index.js';
 import { MetricsService } from './monitoring/metrics.js';
+import { ApprovalService } from './security/approval.js';
+import { AuditLog } from './security/audit.js';
 
 export const SERVER_NAME = 'fuxa-ai-gateway';
 export const SERVER_VERSION = '0.1.0';
+
+export interface ServerOptions {
+  writeEnabled?: boolean;
+}
 
 /**
  * Create and configure the MCP server with its base tools.
  *
  * Tools delegate to services, which delegate to the FUXA adapter. No tool
- * calls HTTP directly.
+ * calls HTTP directly. Write operations are disabled by default.
  */
-export function createServer(client: FuxaClient): McpServer {
+export function createServer(client: FuxaClient, options: ServerOptions = {}): McpServer {
   const server = new McpServer({
     name: SERVER_NAME,
     version: SERVER_VERSION,
@@ -29,6 +36,8 @@ export function createServer(client: FuxaClient): McpServer {
   registerPrompts(server);
 
   const metrics = new MetricsService();
+  const audit = new AuditLog();
+  const approval = new ApprovalService(options.writeEnabled ?? false);
 
   const healthService = new HealthService(client);
   const projectService = new ProjectService(client);
@@ -37,6 +46,7 @@ export function createServer(client: FuxaClient): McpServer {
   const comparisonService = new ComparisonService(client);
   const alarmService = new AlarmService(client);
   const diagnosisService = new DiagnosisService(client);
+  const deviceWriteService = new DeviceWriteService(client, approval, audit);
 
   server.registerTool(
     'fuxa_health_check',
@@ -215,6 +225,36 @@ export function createServer(client: FuxaClient): McpServer {
           {
             type: 'text',
             text: metrics.prometheusText(),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    'fuxa_add_device',
+    {
+      title: 'FUXA Add Device',
+      description:
+        'Add a device to the FUXA project. WRITE operation. Disabled by default; requires write to be enabled and an approver. Records an audit entry.',
+      inputSchema: {
+        device: z
+          .object({
+            id: z.string().describe('Device id'),
+            name: z.string().describe('Device name'),
+            type: z.string().optional().describe('Device type'),
+          })
+          .passthrough(),
+        approver: z.string().describe('Approver identity for the write operation'),
+      },
+    },
+    async ({ device, approver }) => {
+      const result = await deviceWriteService.addDevice(device, approver);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result),
           },
         ],
       };

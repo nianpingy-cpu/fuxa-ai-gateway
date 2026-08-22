@@ -2,6 +2,7 @@ import {
   DaqPoint,
   FuxaAlarm,
   FuxaConfig,
+  FuxaDevice,
   FuxaProject,
   FuxaTag,
   HttpRequestOptions,
@@ -49,8 +50,8 @@ export class FuxaClient {
     this.daqApi = new DaqApi(authedTransport, baseUrl);
   }
 
-  getProject(id: string): Promise<FuxaProject> {
-    return this.projectApi.getProject(id);
+  getProject(): Promise<FuxaProject> {
+    return this.projectApi.getProject();
   }
 
   listProjects(): Promise<FuxaProject[]> {
@@ -61,7 +62,7 @@ export class FuxaClient {
     return this.tagApi.listTags();
   }
 
-  getTag(id: string): Promise<FuxaTag> {
+  getTag(id: string): Promise<FuxaTag | undefined> {
     return this.tagApi.getTag(id);
   }
 
@@ -69,11 +70,18 @@ export class FuxaClient {
     return this.alarmApi.listActiveAlarms();
   }
 
-  getAlarm(id: string): Promise<FuxaAlarm> {
+  getAlarm(id: string): Promise<FuxaAlarm | undefined> {
     return this.alarmApi.getAlarm(id);
   }
 
   getHistory(tagId: string, from: string, to: string): Promise<DaqPoint[]> {
     return this.daqApi.getHistory(tagId, from, to);
+  }
+
+  /**
+   * Add a device to the FUXA project (write operation).
+   */
+  async addDevice(device: FuxaDevice): Promise<void> {
+    await this.projectApi.setProjectData('set-device', device);
   }
 }

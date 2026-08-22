@@ -2,6 +2,9 @@ import { DaqPoint, HttpTransport } from './types.js';
 
 /**
  * FUXA DAQ (historical data) endpoints.
+ *
+ * Real FUXA: GET /api/daq?query={"sids":[...],"from":..,"to":..} returns an
+ * array of per-sid point arrays.
  */
 export class DaqApi {
   private readonly transport: HttpTransport;
@@ -13,11 +16,12 @@ export class DaqApi {
   }
 
   async getHistory(tagId: string, from: string, to: string): Promise<DaqPoint[]> {
-    const params = new URLSearchParams({ from, to });
-    const response = await this.transport.request<{ data: DaqPoint[] }>({
+    const query = JSON.stringify({ sids: [tagId], from, to });
+    const params = new URLSearchParams({ query });
+    const response = await this.transport.request<DaqPoint[][]>({
       method: 'GET',
-      url: `${this.baseUrl}/api/daq/${tagId}?${params.toString()}`,
+      url: `${this.baseUrl}/api/daq?${params.toString()}`,
     });
-    return response.data;
+    return response[0] ?? [];
   }
 }

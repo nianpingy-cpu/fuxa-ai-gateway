@@ -43,4 +43,19 @@ describe('FetchTransport', () => {
     ).rejects.toMatchObject({ code: 'CONNECTION_REFUSED' });
     vi.unstubAllGlobals();
   });
+
+  it('sets Content-Type application/json when a body is present', async () => {
+    let capturedHeaders: Record<string, string> | undefined;
+    const fetchMock = vi.fn(async (_url: string, opts: { headers?: Record<string, string> }) => {
+      capturedHeaders = opts.headers;
+      return { ok: true, json: async () => ({}) };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const transport = new FetchTransport(1000);
+    await transport.request({ method: 'POST', url: 'http://fuxa/api', body: { a: 1 } });
+
+    expect(capturedHeaders?.['Content-Type']).toBe('application/json');
+    vi.unstubAllGlobals();
+  });
 });

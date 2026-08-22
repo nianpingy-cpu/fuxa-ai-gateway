@@ -8,7 +8,8 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const transport = new FetchTransport();
   const client = new FuxaClient(config, transport);
-  const server = createServer(client);
+  const writeEnabled = (process.env['FUXA_WRITE_ENABLED'] ?? 'false').toLowerCase() === 'true';
+  const server = createServer(client, { writeEnabled });
   const stdio = new StdioServerTransport();
   await server.connect(stdio);
 }

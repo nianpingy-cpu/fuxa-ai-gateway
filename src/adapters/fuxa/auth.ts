@@ -32,22 +32,25 @@ export class FuxaAuth {
       return { 'X-API-Key': this.apiKey };
     }
     if (this.token && (this.tokenExpiresAt === undefined || this.tokenExpiresAt > Date.now())) {
-      return { Authorization: `Bearer ${this.token}` };
+      return { 'x-access-token': this.token };
     }
     if (!this.username || !this.password) {
-      // No credentials configured; proceed without authentication.
+      // No credentials configured; proceed without authentication
+      // (FUXA works without auth when secureEnabled is false).
       return {};
     }
     const result = await this.login(this.username, this.password);
     this.token = result.token;
     this.tokenExpiresAt = result.expiresAt;
-    return { Authorization: `Bearer ${this.token}` };
+    return { 'x-access-token': this.token };
   }
 
   private async login(username: string, password: string): Promise<AuthResult> {
-    const response = await this.transport.request<{ data: { token: string } }>({
+    const response = await this.transport.request<{
+      data: { token: string };
+    }>({
       method: 'POST',
-      url: `${this.baseUrl}/api/login`,
+      url: `${this.baseUrl}/api/signin`,
       body: { username, password },
     });
     if (!response.data?.token) {

@@ -11,8 +11,10 @@ export {
   type DaqPoint,
   type FuxaAlarm,
   type FuxaConfig,
+  type FuxaDevice,
   type FuxaProject,
   type FuxaTag,
+  type RawFuxaProject,
   type HttpRequestOptions,
   type HttpTransport,
 } from './types.js';

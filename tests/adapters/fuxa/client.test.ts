@@ -18,19 +18,19 @@ describe('FuxaClient', () => {
     const { transport, calls } = createMockTransport();
     const client = new FuxaClient({ baseUrl: 'http://fuxa:1881', apiKey: 'secret-key' }, transport);
 
-    await client.getProject('p1');
+    await client.getProject();
 
     expect(calls).toHaveLength(1);
     expect(calls[0]?.headers?.['X-API-Key']).toBe('secret-key');
   });
 
-  it('builds the correct URL from baseUrl and path', async () => {
+  it('builds the correct project URL', async () => {
     const { transport, calls } = createMockTransport();
     const client = new FuxaClient({ baseUrl: 'http://fuxa:1881' }, transport);
 
-    await client.getProject('p1');
+    await client.getProject();
 
-    expect(calls[0]?.url).toBe('http://fuxa:1881/api/project/p1');
+    expect(calls[0]?.url).toBe('http://fuxa:1881/api/project');
   });
 
   it('normalizes a 401 response into a FuxaError', async () => {
@@ -41,7 +41,7 @@ describe('FuxaClient', () => {
     };
     const client = new FuxaClient({ baseUrl: 'http://fuxa:1881' }, transport);
 
-    await expect(client.getProject('p1')).rejects.toBeInstanceOf(FuxaError);
-    await expect(client.getProject('p1')).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+    await expect(client.getProject()).rejects.toBeInstanceOf(FuxaError);
+    await expect(client.getProject()).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 });

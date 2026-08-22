@@ -1,7 +1,10 @@
-import { FuxaProject, HttpTransport } from './types.js';
+import { FuxaProject, HttpTransport, RawFuxaProject } from './types.js';
 
 /**
  * FUXA project endpoints.
+ *
+ * FUXA exposes a single project. GET /api/project returns the full project
+ * JSON, and POST /api/projectData applies targeted changes.
  */
 export class ProjectApi {
   private readonly transport: HttpTransport;
@@ -12,19 +15,39 @@ export class ProjectApi {
     this.baseUrl = baseUrl;
   }
 
-  async getProject(id: string): Promise<FuxaProject> {
-    const response = await this.transport.request<{ data: FuxaProject }>({
+  async getProject(): Promise<FuxaProject> {
+    const raw = await this.transport.request<RawFuxaProject>({
       method: 'GET',
-      url: `${this.baseUrl}/api/project/${id}`,
+      url: `${this.baseUrl}/api/project`,
     });
-    return response.data;
+    return normalizeProject(raw);
   }
 
   async listProjects(): Promise<FuxaProject[]> {
-    const response = await this.transport.request<{ data: FuxaProject[] }>({
-      method: 'GET',
-      url: `${this.baseUrl}/api/projects`,
-    });
-    return response.data;
+    return [await this.getProject()];
   }
+
+  /**
+   * Apply a targeted project change (e.g. add/remove a device).
+   */
+  async setProjectData(cmd: string, data: unknown): Promise<void> {
+    await this.transport.request<unknown>({
+      method: 'POST',
+      url: `${this.baseUrl}/api/projectData`,
+      body: { cmd, data },
+    });
+  }
+}
+
+function normalizeProject(raw: RawFuxaProject): FuxaProject {
+  const name =
+    raw.server && typeof raw.server === 'object'
+      ? (raw.server as { name?: string }).name
+      : undefined;
+  return {
+    id: 'project',
+    name: name ?? 'FUXA Project',
+    description: undefined,
+    raw,
+  };
 }

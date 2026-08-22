@@ -19,6 +19,7 @@ export interface FuxaProject {
   id: string;
   name: string;
   description?: string;
+  raw: RawFuxaProject;
 }
 
 export interface FuxaTag {
@@ -27,6 +28,39 @@ export interface FuxaTag {
   unit?: string;
   deviceId?: string;
   description?: string;
+}
+
+/**
+ * Raw FUXA device (as stored in the FUXA project).
+ */
+export interface FuxaDevice {
+  id: string;
+  name: string;
+  type?: string;
+  enabled?: boolean;
+  tags?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/**
+ * Raw FUXA project as returned by GET /api/project.
+ */
+export interface RawFuxaProject {
+  devices?: Record<string, FuxaDevice>;
+  hmi?: { views?: unknown[] };
+  version?: string;
+  server?: unknown;
+  [key: string]: unknown;
+}
+
+/**
+ * Normalized project summary used by services.
+ */
+export interface FuxaProject {
+  id: string;
+  name: string;
+  description?: string;
+  raw: RawFuxaProject;
 }
 
 export interface FuxaAlarm {

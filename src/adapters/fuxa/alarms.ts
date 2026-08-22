@@ -1,7 +1,7 @@
 import { FuxaAlarm, HttpTransport } from './types.js';
 
 /**
- * FUXA alarm endpoints.
+ * FUXA alarm endpoints. GET /api/alarms returns the active alarms.
  */
 export class AlarmApi {
   private readonly transport: HttpTransport;
@@ -13,18 +13,15 @@ export class AlarmApi {
   }
 
   async listActiveAlarms(): Promise<FuxaAlarm[]> {
-    const response = await this.transport.request<{ data: FuxaAlarm[] }>({
+    const alarms = await this.transport.request<FuxaAlarm[]>({
       method: 'GET',
-      url: `${this.baseUrl}/api/alarms/active`,
+      url: `${this.baseUrl}/api/alarms`,
     });
-    return response.data;
+    return Array.isArray(alarms) ? alarms : [];
   }
 
-  async getAlarm(id: string): Promise<FuxaAlarm> {
-    const response = await this.transport.request<{ data: FuxaAlarm }>({
-      method: 'GET',
-      url: `${this.baseUrl}/api/alarms/${id}`,
-    });
-    return response.data;
+  async getAlarm(id: string): Promise<FuxaAlarm | undefined> {
+    const alarms = await this.listActiveAlarms();
+    return alarms.find((a) => a.id === id || a.name === id);
   }
 }
